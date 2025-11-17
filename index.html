@@ -1,1 +1,1613 @@
 
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英文片語中英對照學習庫</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Inter 字體 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 使用 Noto Sans TC 作為中文字體，Inter 作為英文字體 */
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            /* Scrollbar styling */
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; /* slate-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569; /* slate-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; /* slate-500 */
+        }
+        /* 搜尋結果反白樣式 */
+        .highlight {
+            background-color: #22d3ee; /* cyan-400 */
+            color: #0f172a; /* slate-900 */
+            font-weight: bold;
+            border-radius: 3px;
+            padding: 0 2px;
+        }
+        /* 增加中文翻譯的樣式 */
+        .phrase-zh {
+            color: #94a3b8; /* slate-400 */
+            font-size: 0.9em;
+            margin-left: 0.5rem;
+        }
+        .phrase-zh:empty {
+            /* 如果中文內容為空，則不顯示 */
+            display: none;
+        }
+        .highlight-zh {
+            background-color: #fbbf24; /* amber-400 */
+            color: #0f172a; /* slate-900 */
+            font-weight: bold;
+            border-radius: 3px;
+            padding: 0 2px;
+        }
+        
+        /* 模式切換按鈕樣式 */
+        .mode-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            border: 2px solid #334155; /* slate-700 */
+            color: #94a3b8; /* slate-400 */
+        }
+        .mode-btn.active {
+            background-color: #0e7490; /* cyan-700 */
+            color: #ffffff;
+            border-color: #0e7490;
+            box-shadow: 0 4px 14px 0 rgba(14, 116, 144, 0.3);
+        }
+        .mode-btn:not(.active):hover {
+            background-color: #334155; /* slate-700 */
+            color: #f1f5f9; /* slate-100 */
+        }
+
+        /* Drag & Drop 遊戲樣式 */
+        .draggable {
+            transition: background-color 0.2s;
+            cursor: grab;
+        }
+        .draggable:hover {
+            background-color: #475569; /* slate-600 */
+        }
+        .draggable.dragging {
+            opacity: 0.5;
+            background-color: #22d3ee; /* cyan-400 */
+            color: #0f172a; /* slate-900 */
+            cursor: grabbing;
+        }
+        .drop-target {
+            transition: all 0.2s;
+        }
+        .drop-target.drag-over {
+            background-color: #334155; /* slate-700 */
+            border-color: #22d3ee; /* cyan-400 */
+        }
+        .drop-target.correct {
+            background-color: #10B981; /* green-500 */
+            color: #ffffff;
+            border-style: solid;
+            border-color: #10B981;
+            cursor: not-allowed;
+        }
+        .drop-target.incorrect {
+            background-color: #EF4444; /* red-500 */
+            color: #ffffff;
+            border-style: solid;
+            border-color: #EF4444;
+            animation: shake 0.5s;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .draggable.used {
+            opacity: 0.2;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen antialiased">
+
+    <div class="container mx-auto max-w-6xl p-4 md:p-8">
+        
+        <!-- 1. 標題 -->
+        <header class="text-center mb-6">
+            <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-2">
+                英文片語互動學習庫
+            </h1>
+            <p class="text-lg md:text-xl text-slate-400">
+                即時搜尋、高效學習。告別死背，讓學習動起來！
+            </p>
+        </header>
+
+        <!-- 2. 模式切換 -->
+        <div class="flex justify-center gap-4 mb-6">
+            <button id="mode-search" class="mode-btn active">
+                <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-5 h-5 mr-1 -mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                搜尋模式
+            </button>
+            <button id="mode-practice" class="mode-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-5 h-5 mr-1 -mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M5 11v2m14-2v2" />
+                </svg>
+                練習模式
+            </button>
+        </div>
+
+        <!-- 3. 搜尋欄 (僅搜尋模式顯示) -->
+        <div id="search-container" class="sticky top-4 z-10 mb-8">
+            <input type="text" id="search-bar"
+                   placeholder="搜尋英文片語或中文意思... (例如: blow up, by chance, ...)"
+                   class="w-full p-4 text-lg bg-slate-800 text-white border-2 border-slate-700 rounded-xl shadow-lg
+                          focus:outline-none focus:ring-4 focus:ring-cyan-500/50 focus:border-cyan-500 transition duration-300">
+        </div>
+
+        <!-- 4. Content Area (搜尋模式) -->
+        <div id="content-area" class="space-y-10">
+            <!-- 搜尋內容將由 JavaScript 動態生成 -->
+        </div>
+
+        <!-- 5. Content Area (練習模式) -->
+        <div id="practice-area" class="space-y-8 hidden">
+            <!-- 1. Control Button -->
+            <div class="text-center">
+                <button id="start-quiz-btn" class="px-6 py-3 bg-cyan-600 text-white font-bold rounded-lg shadow-lg hover:bg-cyan-700 transition-transform transform hover:scale-105">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-5 h-5 mr-2 -mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m-15.357-2a8.001 8.001 0 0015.357 2m0 0H15" />
+                    </svg>
+                    開始新遊戲 (5題)
+                </button>
+            </div>
+        
+            <!-- 2. Game Board -->
+            <div id="quiz-board" class="mt-8 p-4 md:p-6 bg-slate-800 rounded-xl shadow-inner hidden">
+                <div id="quiz-message" class="text-center text-2xl font-bold text-green-400 mb-6 hidden">
+                    🎉 恭喜！全部答對了！ 🎉
+                </div>
+                
+                <div class="flex flex-col md:flex-row gap-6 md:gap-8">
+                    <!-- Column 1: English Phrases (Drop Targets) -->
+                    <div id="en-phrases" class="flex-1 space-y-4 md:w-1/2">
+                        <!-- 英文題目會動態生成於此 -->
+                    </div>
+        
+                    <!-- Column 2: Chinese Options (Draggables) -->
+                    <div class="flex-1 md:w-1/2 p-4 bg-slate-800 border border-slate-700 rounded-lg">
+                        <h3 class="text-xl font-semibold text-cyan-400 mb-4 text-center">中文選項 (拖曳到左側)</h3>
+                        <div id="zh-options-pool" class="grid grid-cols-2 gap-3">
+                            <!-- 中文選項會動態生成於此 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. 找不到結果的提示 (僅搜尋模式顯示) -->
+        <div id="no-results" class="text-center text-slate-500 text-xl py-20 hidden">
+            <p>Oops! 找不到符合 "<span></span>" 的片語。</p>
+            <p class="text-base mt-2">試試看別的關鍵字？</p>
+        </div>
+
+    </div>
+
+    <script>
+        // 所有的片語資料
+        const database = [
+            {
+                part: "PART I：動詞片語 (Units 1-45)",
+                units: [
+                    { title: "Unit 1: Blow", phrases: [
+                        { en: "blow away", zh: "吹走；令人印象深刻" },
+                        { en: "blow off", zh: "忽視；吹掉" },
+                        { en: "blow out", zh: "吹熄" },
+                        { en: "blow over", zh: "平息；過去" },
+                        { en: "blow one’s top", zh: "勃然大怒" },
+                        { en: "blow up", zh: "爆炸；充氣；放大" }
+                    ] },
+                    { title: "Unit 2: Break", phrases: [
+                        { en: "break away", zh: "脫離；逃脫" },
+                        { en: "break down", zh: "故障；崩潰；分解" },
+                        { en: "break in", zh: "闖入；插嘴" },
+                        { en: "break off", zh: "斷絕；中止" },
+                        { en: "break out", zh: "爆發；逃脫" },
+                        { en: "break through", zh: "突破" },
+                        { en: "break up", zh: "分手；結束；破碎" },
+                        { en: "break up with sb.", zh: "與某人分手" },
+                        { en: "break one’s word", zh: "食言" },
+                        { en: "break with", zh: "與...斷絕關係" }
+                    ] },
+                    { title: "Unit 3: Bring", phrases: [
+                        { en: "bring … back", zh: "帶回；使...恢復" },
+                        { en: "bring forth", zh: "產生；提出" },
+                        { en: "bring in …", zh: "引進；賺進" },
+                        { en: "bring … off", zh: "成功完成" },
+                        { en: "bring … out", zh: "出版；拿出；使...顯現" },
+                        { en: "bring on", zh: "引起；導致" },
+                        { en: "bring up", zh: "撫養；提出" },
+                        { en: "bring about", zh: "導致；引起" }
+                    ] },
+                    { title: "Unit 4: Come", phrases: [
+                        { en: "come about", zh: "發生" },
+                        { en: "come across", zh: "偶然遇見；給人...印象" },
+                        { en: "come along", zh: "一起來；進展" },
+                        { en: "come by", zh: "得到；經過" },
+                        { en: "come down", zh: "下降；倒塌" },
+                        { en: "come down on/upon", zh: "斥責" },
+                        { en: "come forth", zh: "出來；出現" },
+                        { en: "come in for", zh: "遭受(批評)" },
+                        { en: "come off", zh: "脫落；成功" },
+                        { en: "come out", zh: "出版；結果是" },
+                        { en: "come out against", zh: "公開反對" },
+                        { en: "come over", zh: "順道來訪" },
+                        { en: "come through", zh: "經歷；度過" },
+                        { en: "come to oneself", zh: "甦醒" },
+                        { en: "come up", zh: "走近；被提出" },
+                        { en: "come up against", zh: "遭遇(困難)" },
+                        { en: "come upon", zh: "偶然發現" },
+                        { en: "come up to", zh: "達到(標準)" },
+                        { en: "come up with", zh: "想出" },
+                        { en: "come of …", zh: "出身於" },
+                        { en: "come on", zh: "快點；來吧" },
+                        { en: "come to", zh: "總計；甦醒" },
+                        { en: "come true", zh: "實現" }
+                    ] },
+                    { title: "Unit 5: Call", phrases: [
+                        { en: "call at", zh: "拜訪(某地)" },
+                        { en: "call back", zh: "回電" },
+                        { en: "call down", zh: "斥責" },
+                        { en: "call for", zh: "需要；要求；呼籲" },
+                        { en: "call forth", zh: "引起；喚起" },
+                        { en: "call in", zh: "召來；來訪" },
+                        { en: "call off", zh: "取消" },
+                        { en: "call on", zh: "拜訪(某人)；呼籲" },
+                        { en: "call out", zh: "呼喊；召集" },
+                        { en: "call up", zh: "打電話；徵召" },
+                        { en: "call one’s attention", zh: "喚起...的注意" }
+                    ] },
+                    { title: "Unit 6: Care", phrases: [
+                        { en: "care about", zh: "關心；在乎" },
+                        { en: "care to + V", zh: "願意" },
+                        { en: "care for", zh: "喜歡；照顧" },
+                        { en: "take care", zh: "小心；保重" },
+                        { en: "take care of …", zh: "照顧" }
+                    ] },
+                    { title: "Unit 7: Carry", phrases: [
+                        { en: "carry … off", zh: "成功完成；贏得" },
+                        { en: "carry out", zh: "執行；實行" },
+                        { en: "carry through", zh: "堅持到底；完成" },
+                        { en: "carry away", zh: "帶走；使...著迷" },
+                        { en: "carry on + Ving / with N", zh: "繼續" }
+                    ] },
+                    { title: "Unit 8: Catch", phrases: [
+                        { en: "catch hold of …", zh: "抓住" },
+                        { en: "be caught up in …", zh: "捲入..." },
+                        { en: "be caught in …", zh: "困在...；淋到..." },
+                        { en: "catch one’s breath", zh: "屏息；喘口氣" },
+                        { en: "catch on", zh: "流行；理解" },
+                        { en: "catch a cold", zh: "感冒" },
+                        { en: "catch up (with …)", zh: "趕上" },
+                        { en: "catch up on …", zh: "補做；補上進度" },
+                        { en: "catch sight of …", zh: "瞥見" }
+                    ] },
+                    { title: "Unit 9: Cut", phrases: [
+                        { en: "cut in line", zh: "插隊" },
+                        { en: "cut class", zh: "蹺課" },
+                        { en: "cut … short", zh: "縮短；打斷" },
+                        { en: "cut sb. short", zh: "打斷某人" },
+                        { en: "cut across", zh: "抄近路" },
+                        { en: "cut back", zh: "削減" },
+                        { en: "cut down", zh: "減少；砍倒" },
+                        { en: "cut in", zh: "插嘴；插隊" },
+                        { en: "cut off", zh: "切斷；阻斷" },
+                        { en: "cut up", zh: "切碎" },
+                        { en: "cut out", zh: "刪掉；停止" }
+                    ] },
+                    { title: "Unit 10: Do", phrases: [
+                        { en: "do sb. good", zh: "對某人有益" },
+                        { en: "do for", zh: "適合；充當" },
+                        { en: "do away with", zh: "廢除" },
+                        { en: "do over", zh: "重做" },
+                        { en: "be to do with", zh: "與...有關" },
+                        { en: "do with", zh: "處理" },
+                        { en: "do without", zh: "沒有...也行" },
+                        { en: "do sb. a favor", zh: "幫某人一個忙" },
+                        { en: "do one’s best", zh: "盡力" },
+                        { en: "do wrong", zh: "做錯事" }
+                    ] },
+                    { title: "Unit 11: Die", phrases: [
+                        { en: "be dying for + N", zh: "渴望" },
+                        { en: "be dying to + V", zh: "渴望" },
+                        { en: "die away", zh: "逐漸消失" },
+                        { en: "die down", zh: "逐漸平息" },
+                        { en: "die out", zh: "滅絕" },
+                        { en: "die of …", zh: "死於(疾病/飢餓)" },
+                        { en: "die from …", zh: "死於(意外/外傷)" }
+                    ] },
+                    { title: "Unit 12: Draw", phrases: [
+                        { en: "draw a comparison", zh: "做比較" },
+                        { en: "draw a conclusion", zh: "下結論" },
+                        { en: "draw one’s attention / eye", zh: "吸引...的注意" },
+                        { en: "draw back", zh: "退縮" },
+                        { en: "draw on", zh: "利用；依靠" },
+                        { en: "draw up", zh: "起草；擬定；(車)停下" },
+                        { en: "draw to a halt / stop", zh: "停下來" },
+                        { en: "draw out", zh: "延長；拉長" }
+                    ] },
+                    { title: "Unit 13: Drop", phrases: [
+                        { en: "drop in on sb.", zh: "順道拜訪" },
+                        { en: "drop off", zh: "(讓...)下車；睡著；減少" },
+                        { en: "drop behind", zh: "落後" },
+                        { en: "drop sb. a line", zh: "寫信給某人" },
+                        { en: "let drop a remark", zh: "無意中說出" },
+                        { en: "drop away", zh: "逐漸離開；減少" },
+                        { en: "drop out", zh: "退學；退出" }
+                    ] },
+                    { title: "Unit 14: Fall", phrases: [
+                        { en: "fall down", zh: "跌倒；失敗" },
+                        { en: "fall asleep", zh: "睡著" },
+                        { en: "fall in love", zh: "墜入情網" },
+                        { en: "fall to pieces/bits", zh: "破碎；崩潰" },
+                        { en: "fall short of …", zh: "未達...標準" },
+                        { en: "fall out of fashion/favor", zh: "失寵；不流行" },
+                        { en: "fall from favor", zh: "失寵" },
+                        { en: "fall victim to …", zh: "成為...的犧牲品" },
+                        { en: "fall into the habit of …", zh: "養成...的習慣" },
+                        { en: "fall apart", zh: "破碎；解體" },
+                        { en: "fall away", zh: "脫落；減少" },
+                        { en: "fall back", zh: "後退；撤退" },
+                        { en: "fall behind", zh: "落後" },
+                        { en: "fall in with", zh: "同意；與...一致" },
+                        { en: "fall off", zh: "減少；下降" },
+                        { en: "fall out with sb.", zh: "與某人吵架" },
+                        { en: "fall over", zh: "跌倒" },
+                        { en: "fall back on", zh: "依賴；求助於" },
+                        { en: "fall through", zh: "失敗；落空" }
+                    ] },
+                    { title: "Unit 15: Go", phrases: [
+                        { en: "go for sth.", zh: "適用於；爭取" },
+                        { en: "go mad / crazy", zh: "發瘋" },
+                        { en: "get going on sth.", zh: "開始做..." },
+                        { en: "go far", zh: "大有前途" },
+                        { en: "go too far", zh: "做得太過火" },
+                        { en: "as sb./sth. goes", zh: "就...而言" },
+                        { en: "go / set about", zh: "開始做" },
+                        { en: "go after", zh: "追逐；追求" },
+                        { en: "go against", zh: "違反" },
+                        { en: "go along", zh: "進行；前進" },
+                        { en: "go along with", zh: "同意" },
+                        { en: "go around doing sth.", zh: "四處做..." },
+                        { en: "go around", zh: "足夠分配" },
+                        { en: "go at", zh: "攻擊；著手做" },
+                        { en: "go back on", zh: "違背(諾言)" },
+                        { en: "go by", zh: "經過；(時間)流逝" },
+                        { en: "go down with", zh: "染上(疾病)" },
+                        { en: "go for nothing", zh: "徒勞無功" },
+                        { en: "go in for", zh: "參加；喜愛" },
+                        { en: "go into", zh: "進入；調查" },
+                        { en: "go on to sth.", zh: "接著做下一件事" },
+                        { en: "go on + Ving / with N", zh: "繼續" },
+                        { en: "go over", zh: "複習；檢查" },
+                        { en: "go through", zh: "經歷；通過" },
+                        { en: "go through with sth.", zh: "完成(困難的事)" },
+                        { en: "go up", zh: "上升；上漲" },
+                        { en: "go with", zh: "搭配" },
+                        { en: "go without", zh: "沒有...也行" },
+                        { en: "it goes without saying", zh: "不用說" },
+                        { en: "go out", zh: "熄滅；過時" }
+                    ] },
+                    { title: "Unit 16: Get", phrases: [
+                        { en: "get along", zh: "相處；進展" },
+                        { en: "get around", zh: "規避；四處走動" },
+                        { en: "get away", zh: "逃脫" },
+                        { en: "get away with", zh: "逃避(懲罰)" },
+                        { en: "get back", zh: "回來；拿回" },
+                        { en: "get down", zh: "下來；使...沮喪" },
+                        { en: "get in", zh: "進入；收穫" },
+                        { en: "get into", zh: "進入；陷入" },
+                        { en: "get it", zh: "懂了" },
+                        { en: "get off", zh: "下(車/船)；脫下" },
+                        { en: "get on", zh: "上(車/船)；進展" },
+                        { en: "get on well with sb.", zh: "與...相處融洽" },
+                        { en: "get out of …", zh: "逃離；擺脫" },
+                        { en: "get over", zh: "克服；從...恢復" },
+                        { en: "get through", zh: "通過；完成；度過" },
+                        { en: "get to", zh: "到達" },
+                        { en: "get together", zh: "聚集" },
+                        { en: "get up", zh: "起床" },
+                        { en: "get hold of …", zh: "抓住；聯絡上" },
+                        { en: "get into trouble", zh: "惹上麻煩" },
+                        { en: "get in touch with", zh: "與...聯繫" },
+                        { en: "get rid of …", zh: "擺脫" },
+                        { en: "get the better of …", zh: "戰勝" }
+                    ] },
+                    { title: "Unit 17: Give", phrases: [
+                        { en: "give and take", zh: "互相遷就" },
+                        { en: "give away", zh: "贈送；洩漏" },
+                        { en: "give back", zh: "歸還" },
+                        { en: "give forth", zh: "發出(光/熱/聲音)" },
+                        { en: "give in", zh: "屈服；繳交" },
+                        { en: "give off", zh: "發出(氣味/光)" },
+                        { en: "give out", zh: "分發；用完" },
+                        { en: "give over to …", zh: "沉溺於" },
+                        { en: "give up", zh: "放棄" },
+                        { en: "give way to …", zh: "讓步；被...取代" },
+                        { en: "give place to …", zh: "被...取代" },
+                        { en: "give rise to …", zh: "引起；導致" }
+                    ] },
+                    { title: "Unit 18: Hang", phrases: [
+                        { en: "hang around / about", zh: "徘徊" },
+                        { en: "hang back", zh: "猶豫；退縮" },
+                        { en: "hang down", zh: "垂下" },
+                        { en: "hang on", zh: "稍等；堅持" },
+                        { en: "hang up", zh: "掛斷電話；掛起" },
+                        { en: "hang over", zh: "籠罩；懸而未決" },
+                        { en: "hang together", zh: "團結一致" },
+                        { en: "hang out", zh: "閒逛" }
+                    ] },
+                    { title: "Unit 19: Hand", phrases: [
+                        { en: "hand around", zh: "傳遞" },
+                        { en: "hand back", zh: "歸還" },
+                        { en: "hand down", zh: "傳下來" },
+                        { en: "hand in", zh: "繳交" },
+                        { en: "hand on", zh: "傳遞" },
+                        { en: "hand out", zh: "分發" },
+                        { en: "hand over", zh: "移交" },
+                        { en: "by hand", zh: "手工；親手" },
+                        { en: "from hand to mouth", zh: "僅能糊口" },
+                        { en: "get a big / good hand", zh: "獲得熱烈掌聲" },
+                        { en: "get the upper hand of …", zh: "占上風" },
+                        { en: "hand in hand", zh: "手牽手；密切相關" },
+                        { en: "join hands with sb.", zh: "與...攜手合作" },
+                        { en: "on the other hand", zh: "另一方面" }
+                    ] },
+                    { title: "Unit 20: Hold", phrases: [
+                        { en: "hold back", zh: "抑制；阻礙" },
+                        { en: "hold down", zh: "壓制；保住(工作)" },
+                        { en: "hold on", zh: "稍等；堅持" },
+                        { en: "hold out", zh: "伸出；堅持" },
+                        { en: "catch/ get hold of ...", zh: "抓住" },
+                        { en: "hold to", zh: "堅持" },
+                        { en: "hold up", zh: "舉起；搶劫；耽擱" },
+                        { en: "lose hold of...", zh: "鬆手；失去控制" }
+                    ] },
+                    { title: "Unit 21: Head", phrases: [
+                        { en: "head for", zh: "前往" },
+                        { en: "head off", zh: "攔截；阻止" },
+                        { en: "above one's head", zh: "太難無法理解" },
+                        { en: "come into one's head", zh: "突然想到" },
+                        { en: "from head to toe", zh: "從頭到腳" },
+                        { en: "keep one's head", zh: "保持冷靜" },
+                        { en: "lose one's head", zh: "失去理智" }
+                    ] },
+                    { title: "Unit 22: Keep", phrases: [
+                        { en: "keep away from", zh: "遠離" },
+                        { en: "keep back", zh: "隱瞞；阻礙" },
+                        { en: "keep down", zh: "抑制；壓低" },
+                        { en: "keep off", zh: "遠離；避開" },
+                        { en: "keep on", zh: "繼續" },
+                        { en: "keep out", zh: "阻擋在外" },
+                        { en: "keep to", zh: "遵守；不偏離" },
+                        { en: "keep up with", zh: "趕上" },
+                        { en: "keep up", zh: "保持；繼續" },
+                        { en: "keep an eye on", zh: "照看；留意" },
+                        { en: "keep in touch with", zh: "保持聯繫" },
+                        { en: "keep in mind", zh: "記住" },
+                        { en: "keep one's head", zh: "保持冷靜" },
+                        { en: "keep one's word", zh: "守信用" },
+                        { en: "keep track of...", zh: "紀錄；追蹤" },
+                        { en: "keep from", zh: "阻止；避免" },
+                        { en: "keep place with", zh: "並駕齊驅" },
+                        { en: "keep early hours", zh: "早睡早起" },
+                        { en: "keep silence", zh: "保持沉默" }
+                    ] },
+                    { title: "Unit 23: Lay", phrases: [
+                        { en: "lay aside", zh: "儲蓄；擱置" },
+                        { en: "lay down", zh: "放下；制定(規則)" },
+                        { en: "lay off", zh: "解雇" },
+                        { en: "lay out", zh: "佈置；花費" },
+                        { en: "lay oneself out for", zh: "盡力" },
+                        { en: "lay over", zh: "停留" },
+                        { en: "lay up", zh: "儲存；(因病)臥床" }
+                    ] },
+                    { title: "Unit 24: Let", phrases: [
+                        { en: "let alone", zh: "更不用說" },
+                        { en: "let go", zh: "放手" },
+                        { en: "let down", zh: "使...失望" },
+                        { en: "let fall", zh: "落下；無意中說出" },
+                        { en: "let go of...", zh: "放開" },
+                        { en: "let in", zh: "讓...進來" },
+                        { en: "let off", zh: "放過；放(煙火)" },
+                        { en: "let on", zh: "洩漏(秘密)" },
+                        { en: "let out", zh: "釋放；發出(聲音)" },
+                        { en: "let up", zh: "(雨/雪)漸小；停歇" },
+                        { en: "let up on", zh: "對...寬容" }
+                    ] },
+                    { title: "Unit 25: Leave", phrases: [
+                        { en: "leave ... alone", zh: "別管" },
+                        { en: "leave aside", zh: "擱置" },
+                        { en: "leave behind", zh: "留下；忘記帶" },
+                        { en: "leave off", zh: "停止" },
+                        { en: "leave on", zh: "保持(開著)" },
+                        { en: "leave out", zh: "遺漏" },
+                        { en: "leave over", zh: "剩下" },
+                        { en: "take leave of sb.", zh: "向某人告辭" }
+                    ] },
+                    { title: "Unit 26: Look", phrases: [
+                        { en: "look about", zh: "環顧" },
+                        { en: "look after", zh: "照顧" },
+                        { en: "look as if ..", zh: "看起來好像" },
+                        { en: "look back", zh: "回顧" },
+                        { en: "look around", zh: "環顧" },
+                        { en: "look down", zh: "往下看" },
+                        { en: "look down on / upon", zh: "輕視" },
+                        { en: "look for", zh: "尋找" },
+                        { en: "look forward to", zh: "期待" },
+                        { en: "look in on人/at地方", zh: "順道拜訪" },
+                        { en: "look into", zh: "調查" },
+                        { en: "look like", zh: "看起來像" },
+                        { en: "look on / upon", zh: "旁觀；看待" },
+                        { en: "look out", zh: "小心" },
+                        { en: "look over", zh: "檢查；瀏覽" },
+                        { en: "look through", zh: "瀏覽；看穿" },
+                        { en: "look to", zh: "指望；依賴" },
+                        { en: "look up", zh: "查閱；仰望" },
+                        { en: "look up to ...", zh: "尊敬" },
+                        { en: "look on", zh: "旁觀" }
+                    ] },
+                    { title: "Unit 27: Lose", phrases: [
+                        { en: "lose one's head", zh: "失去理智" },
+                        { en: "lose one's heart to ...", zh: "愛上" },
+                        { en: "lose one's temper", zh: "發脾氣" },
+                        { en: "lose oneself in", zh: "沉迷於" },
+                        { en: "lose sight of ...", zh: "看不見" },
+                        { en: "be lost in ...", zh: "沉浸於" },
+                        { en: "be lost to", zh: "對...麻木" },
+                        { en: "lose one's way", zh: "迷路" },
+                        { en: "lose heart", zh: "失去信心" },
+                        { en: "lose no time in + Ving", zh: "馬上去做" }
+                    ] },
+                    { title: "Unit 28: Make", phrases: [
+                        { en: "make away with", zh: "偷走；殺掉" },
+                        { en: "make believe", zh: "假裝" },
+                        { en: "make for", zh: "前往；有助於" },
+                        { en: "make good", zh: "成功；補償" },
+                        { en: "make it", zh: "成功；趕上" },
+                        { en: "make up with ...", zh: "與...和好" },
+                        { en: "make out", zh: "理解；辨認" },
+                        { en: "make over", zh: "改造；轉讓" },
+                        { en: "make up", zh: "彌補；編造；化妝" },
+                        { en: "make up for", zh: "彌補" },
+                        { en: "make up one's mind", zh: "下定決心" },
+                        { en: "make a difference", zh: "有所作為；有影響" },
+                        { en: "make fun of ...", zh: "取笑" },
+                        { en: "make the best of", zh: "善加利用" },
+                        { en: "make a fool of..", zh: "愚弄" },
+                        { en: "make a point of ..", zh: "強調；堅持" },
+                        { en: "make use of ...", zh: "利用" },
+                        { en: "make progress", zh: "進步" },
+                        { en: "make room for ...", zh: "騰出空間" }
+                    ] },
+                    { title: "Unit 29: Put", phrases: [
+                        { en: "put about", zh: "散布(謠言)" },
+                        { en: "put aside", zh: "儲蓄；擱置" },
+                        { en: "put away", zh: "收拾；儲存" },
+                        { en: "put back", zh: "放回原處" },
+                        { en: "put down", zh: "寫下；鎮壓" },
+                        { en: "put forth", zh: "提出；長出(芽)" },
+                        { en: "put forward", zh: "提出(建議)" },
+                        { en: "put in", zh: "投入(時間/精力)" },
+                        { en: "put in for", zh: "申請" },
+                        { en: "put it on", zh: "假裝" },
+                        { en: "put off", zh: "延期" },
+                        { en: "put on", zh: "穿上；上演；增加(體重)" },
+                        { en: "put out", zh: "熄滅；出版" },
+                        { en: "put through", zh: "接通電話；完成" },
+                        { en: "put together", zh: "組合" },
+                        { en: "put up", zh: "舉起；建造；住宿" },
+                        { en: "put up with", zh: "忍受" },
+                        { en: "put in forth", zh: "提出；長出(芽)" },
+                        { en: "put into practice", zh: "實行" }
+                    ] },
+                    { title: "Unit 30: Pick", phrases: [
+                        { en: "pick off", zh: "摘下；狙擊" },
+                        { en: "pick up", zh: "撿起；學會；接送" },
+                        { en: "pick on", zh: "欺負；挑選" },
+                        { en: "pick out", zh: "挑選" },
+                        { en: "pick holes in", zh: "吹毛求疵" },
+                        { en: "pick up with sb.", zh: "偶然認識" },
+                        { en: "pick one's way", zh: "小心翼翼地走" }
+                    ] },
+                    { title: "Unit 31: Pass", phrases: [
+                        { en: "pass away", zh: "去世" },
+                        { en: "pass by", zh: "經過" },
+                        { en: "pass off", zh: "冒充；(事情)過去" },
+                        { en: "pass over", zh: "忽略" },
+                        { en: "pass on", zh: "傳遞" },
+                        { en: "pass through", zh: "經過" },
+                        { en: "pass down", zh: "傳下來" },
+                        { en: "pass out", zh: "昏倒；分發" }
+                    ] },
+                    { title: "Unit 32: Pay", phrases: [
+                        { en: "pay back", zh: "償還；報復" },
+                        { en: "pay down", zh: "付現" },
+                        { en: "pay off", zh: "付清；有回報" },
+                        { en: "pay out", zh: "付出(大筆錢)" },
+                        { en: "pay attention to ...", zh: "注意" },
+                        { en: "pay for sth.", zh: "付款；付出代價" }
+                    ] },
+                    { title: "Unit 33: Play", phrases: [
+                        { en: "play tricks on sb.", zh: "捉弄某人" },
+                        { en: "play the devil with", zh: "搞砸" },
+                        { en: "play at", zh: "玩(遊戲)" },
+                        { en: "play ... off against...", zh: "挑撥離間" },
+                        { en: "play on / upon", zh: "利用(感情)" },
+                        { en: "play with", zh: "玩弄" }
+                    ] },
+                    { title: "Unit 34: Run", phrases: [
+                        { en: "run errands", zh: "跑腿" },
+                        { en: "run after", zh: "追逐" },
+                        { en: "run across", zh: "偶然遇見" },
+                        { en: "run away", zh: "逃跑" },
+                        { en: "run down", zh: "撞倒；批評；(健康)變差" },
+                        { en: "run into", zh: "撞上；偶然遇見" },
+                        { en: "run on", zh: "繼續" },
+                        { en: "run out", zh: "用完" },
+                        { en: "run over", zh: "輾過；瀏覽" },
+                        { en: "run through", zh: "瀏覽；刺穿；花光" },
+                        { en: "run up against", zh: "遭遇(困難)" },
+                        { en: "run around", zh: "跑來跑去" },
+                        { en: "run off", zh: "逃跑；影印" },
+                        { en: "run up", zh: "積欠(債務)" }
+                    ] },
+                    { title: "Unit 35: See", phrases: [
+                        { en: "see about", zh: "處理" },
+                        { en: "see after", zh: "照顧" },
+                        { en: "see into", zh: "調查" },
+                        { en: "see ... off", zh: "送行" },
+                        { en: "see through", zh: "看穿；看透" },
+                        { en: "see out", zh: "看到最後" },
+                        { en: "see to", zh: "處理；照料" },
+                        { en: "see eye to eye", zh: "意見一致" }
+                    ] },
+                    { title: "Unit 36: Stay", phrases: [
+                        { en: "stay away from", zh: "遠離" },
+                        { en: "stay in", zh: "待在家" },
+                        { en: "stay out", zh: "待在外面" },
+                        { en: "stay up", zh: "熬夜" },
+                        { en: "stay in touch with", zh: "保持聯繫" }
+                    ] },
+                    { title: "Unit 37: Set", phrases: [
+                        { en: "set about", zh: "開始做" },
+                        { en: "set aside", zh: "儲蓄；擱置" },
+                        { en: "set in", zh: "(壞天氣)開始" },
+                        { en: "set off", zh: "出發；引起" },
+                        { en: "set out", zh: "出發；開始" },
+                        { en: "set to", zh: "開始(認真做)" },
+                        { en: "set up", zh: "建立；設立" },
+                        { en: "set a good example", zh: "樹立好榜樣" }
+                    ] },
+                    { title: "Unit 38: Start", phrases: [
+                        { en: "start over", zh: "重新開始" },
+                        { en: "start back", zh: "嚇一跳" },
+                        { en: "start in on ...", zh: "開始(吃/批評)" },
+                        { en: "start off", zh: "開始" },
+                        { en: "start out", zh: "出發；開始" },
+                        { en: "start up", zh: "啟動(機器)" },
+                        { en: "start with", zh: "從...開始" },
+                        { en: "start for", zh: "出發前往" }
+                    ] },
+                    { title: "Unit 39: Stand", phrases: [
+                        { en: "stand against", zh: "反對" },
+                        { en: "stand alone", zh: "獨立；突出" },
+                        { en: "stand aside", zh: "站到一旁" },
+                        { en: "stand away", zh: "站開" },
+                        { en: "stand behind", zh: "支持" },
+                        { en: "stand by", zh: "支持；待命" },
+                        { en: "stand firm", zh: "站穩立場" },
+                        { en: "stand for", zh: "代表；主張" },
+                        { en: "stand in", zh: "代理" },
+                        { en: "stand off", zh: "保持距離" },
+                        { en: "stand to", zh: "遵守" },
+                        { en: "stand out", zh: "突出" },
+                        { en: "stand up", zh: "站起來；(論點)站得住腳" },
+                        { en: "stand up against", zh: "反抗" },
+                        { en: "stand up for", zh: "支持；維護" },
+                        { en: "stand to reason", zh: "理所當然" }
+                    ] },
+                    { title: "Unit 40: Sit", phrases: [
+                        { en: "sit about / around", zh: "閒坐" },
+                        { en: "sit back", zh: "休息；不介入" },
+                        { en: "sit down to", zh: "坐下來(吃飯/工作)" },
+                        { en: "sit in", zh: "旁聽；靜坐" },
+                        { en: "sit up", zh: "熬夜；坐直" }
+                    ] },
+                    { title: "Unit 41: Turn", phrases: [
+                        { en: "turn against", zh: "反對" },
+                        { en: "turn away", zh: "轉過臉；拒絕" },
+                        { en: "turn in", zh: "繳交；上床睡覺" },
+                        { en: "turn out", zh: "結果是；生產；關掉" },
+                        { en: "turn around", zh: "轉身；好轉" },
+                        { en: "turn back", zh: "折返" },
+                        { en: "turn off", zh: "關掉" },
+                        { en: "turn over", zh: "翻轉；移交" },
+                        { en: "turn aside", zh: "轉到一旁" },
+                        { en: "turn down", zh: "拒絕；調小(音量)" },
+                        { en: "turn on", zh: "打開" },
+                        { en: "turn to", zh: "求助於" },
+                        { en: "turn up", zh: "出現；調大(音量)" },
+                        { en: "turn into", zh: "變成" },
+                        { en: "turn one's back on", zh: "不理睬；背棄" }
+                    ] },
+                    { title: "Unit 42: Throw", phrases: [
+                        { en: "throw about / around", zh: "亂丟" },
+                        { en: "throw away", zh: "丟棄" },
+                        { en: "throw back", zh: "扔回去" },
+                        { en: "throw off", zh: "擺脫" },
+                        { en: "throw on", zh: "匆匆穿上" },
+                        { en: "throw out", zh: "丟掉；逐出" },
+                        { en: "throw oneself into", zh: "投身於" },
+                        { en: "throw oneself on", zh: "撲向" }
+                    ] },
+                    { title: "Unit 43: Take", phrases: [
+                        { en: "take after", zh: "與...相像" },
+                        { en: "take back", zh: "收回(話)；拿回" },
+                        { en: "take in", zh: "吸收；欺騙；理解" },
+                        { en: "take out", zh: "拿出；帶...出去" },
+                        { en: "take around", zh: "帶...參觀" },
+                        { en: "take away", zh: "帶走" },
+                        { en: "take A for B", zh: "誤認A為B" },
+                        { en: "take down", zh: "寫下；拆除" },
+                        { en: "take off", zh: "脫下；起飛" },
+                        { en: "take up with", zh: "與...交往" },
+                        { en: "take care of", zh: "照顧" },
+                        { en: "take on", zh: "承擔；雇用" },
+                        { en: "take advantage of ...", zh: "利用" },
+                        { en: "take hold of ...", zh: "抓住" },
+                        { en: "take one's time + Ving", zh: "慢慢來" },
+                        { en: "take over", zh: "接管" },
+                        { en: "take to", zh: "喜歡；開始(習慣)" },
+                        { en: "take up", zh: "佔據(空間/時間)；開始(興趣)" },
+                        { en: "take ... for granted", zh: "視...為理所當然" },
+                        { en: "take ... into account", zh: "考慮" },
+                        { en: "take part in", zh: "參加" },
+                        { en: "take measures", zh: "採取措施" },
+                        { en: "take no notice of ..", zh: "不理會" },
+                        { en: "take turns + Ving", zh: "輪流" },
+                        { en: "take place", zh: "發生" },
+                        { en: "take charge of ...", zh: "負責" },
+                        { en: "take delight in", zh: "樂於" },
+                        { en: "take pains", zh: "費心" }
+                    ] },
+                    { title: "Unit 44: Tell", phrases: [
+                        { en: "tell against", zh: "對...不利" },
+                        { en: "tell off", zh: "斥責" },
+                        { en: "tell the truth", zh: "說實話" },
+                        { en: "tell a lie", zh: "說謊" },
+                        { en: "tell A from B", zh: "分辨A與B" }
+                    ] },
+                    { title: "Unit 45: Think", phrases: [
+                        { en: "think about", zh: "考慮" },
+                        { en: "think all the better of ...", zh: "更加看重" },
+                        { en: "think back", zh: "回想" },
+                        { en: "think poorly／little of ...", zh: "輕視" },
+                        { en: "think highly／much of ...", zh: "看重" },
+                        { en: "think nothing of ...", zh: "不當一回事" },
+                        { en: "think of ...", zh: "想到；認為" },
+                        { en: "think out", zh: "仔細想出" },
+                        { en: "think over", zh: "仔細考慮" },
+                        { en: "think up", zh: "想出(藉口/辦法)" },
+                        { en: "think well of ...", zh: "看重" },
+                        { en: "think ill of ...", zh: "輕視" }
+                    ] }
+                ]
+            },
+            {
+                part: "PART II：介係詞片語 (Units 46-59)",
+                units: [
+                    { title: "Unit 46: All", phrases: [
+                        { en: "all at once", zh: "突然" },
+                        { en: "all but", zh: "幾乎" },
+                        { en: "all in all", zh: "總而言之" },
+                        { en: "all of a sudden", zh: "突然" },
+                        { en: "all the way", zh: "一路" },
+                        { en: "all the time", zh: "一直" }
+                    ] },
+                    { title: "Unit 47: As", phrases: [
+                        { en: "as a matter of fact", zh: "事實上" },
+                        { en: "as a rule", zh: "通常" },
+                        { en: "as far as", zh: "遠至；就...而言" },
+                        { en: "as for", zh: "至於" },
+                        { en: "as long as", zh: "只要" },
+                        { en: "as soon as", zh: "一...就..." },
+                        { en: "as well as", zh: "以及" },
+                        { en: "as to", zh: "關於" },
+                        { en: "as usual", zh: "一如往常" }
+                    ] },
+                    { title: "Unit 48: At", phrases: [
+                        { en: "at a loss", zh: "困惑；不知所措" },
+                        { en: "at all costs", zh: "不惜任何代價" },
+                        { en: "at best", zh: "充其量" },
+                        { en: "at first", zh: "起初" },
+                        { en: "at hand", zh: "在手邊；即將來臨" },
+                        { en: "at heart", zh: "內心" },
+                        { en: "at intervals", zh: "斷斷續續" },
+                        { en: "at large", zh: "逍遙法外" },
+                        { en: "at length", zh: "終於；詳細地" },
+                        { en: "at most", zh: "至多" },
+                        { en: "at present", zh: "目前" },
+                        { en: "at random", zh: "隨機地" },
+                        { en: "at times", zh: "有時候" },
+                        { en: "at work", zh: "在工作" }
+                    ] },
+                    { title: "Unit 49: By", phrases: [
+                        { en: "by accident", zh: "偶然" },
+                        { en: "by all means", zh: "務必；當然可以" },
+                        { en: "by chance", zh: "偶然" },
+                        { en: "by far", zh: "...得多" },
+                        { en: "by heart", zh: "憑記憶" },
+                        { en: "by mistake", zh: "錯誤地" },
+                        { en: "by nature", zh: "天生地" },
+                        { en: "by no means", zh: "絕不" },
+                        { en: "by oneself", zh: "獨自" },
+                        { en: "by the way", zh: "順帶一提" }
+                    ] },
+                    { title: "Unit 50: For", phrases: [
+                        { en: "for a change", zh: "換換口味" },
+                        { en: "for example", zh: "例如" },
+                        { en: "for good", zh: "永久地" },
+                        { en: "for instance", zh: "例如" },
+                        { en: "for life", zh: "終身" },
+                        { en: "for one thing", zh: "一方面" },
+                        { en: "for the moment", zh: "暫時" },
+                        { en: "for the sake of", zh: "為了" },
+                        { en: "for the time being", zh: "暫時" }
+                    ] },
+                    { title: "Unit 51: In", phrases: [
+                        { en: "in a hurry", zh: "匆忙地" },
+                        { en: "in addition to", zh: "除...之外" },
+                        { en: "in advance", zh: "事先" },
+                        { en: "in brief", zh: "簡言之" },
+                        { en: "in case", zh: "萬一" },
+                        { en: "in charge of", zh: "負責" },
+                        { en: "in common", zh: "共同" },
+                        { en: "in danger", zh: "處於危險中" },
+                        { en: "in detail", zh: "詳細地" },
+                        { en: "in exchange for", zh: "交換" },
+                        { en: "in fact", zh: "事實上" },
+                        { en: "in favor of", zh: "贊成" },
+                        { en: "in general", zh: "一般而言" },
+                        { en: "in honor of", zh: "為了紀念" },
+                        { en: "in memory of", zh: "為了紀念" },
+                        { en: "in need", zh: "需要" },
+                        { en: "in order", zh: "井然有序" },
+                        { en: "in particular", zh: "特別" },
+                        { en: "in place of", zh: "代替" },
+                        { en: "in return", zh: "作為回報" },
+                        { en: "in short", zh: "簡言之" },
+                        { en: "in spite of", zh: "儘管" },
+                        { en: "in terms of", zh: "就...而言" },
+                        { en: "in the long run", zh: "終究" },
+                        { en: "in the meantime", zh: "同時" },
+                        { en: "in turn", zh: "輪流；因此" }
+                    ] },
+                    { title: "Unit 52: From", phrases: [
+                        { en: "from now on", zh: "從現在起" },
+                        { en: "from place to place", zh: "到处" },
+                        { en: "from time to time", zh: "有時候" },
+                        { en: "from bad to worse", zh: "愈來愈糟" }
+                    ] },
+                    { title: "Unit 53: Of", phrases: [
+                        { en: "of course", zh: "當然" },
+                        { en: "of importance", zh: "重要的" },
+                        { en: "of value", zh: "有價值的" },
+                        { en: "of use", zh: "有用的" }
+                    ] },
+                    { title: "Unit 54: On", phrases: [
+                        { en: "on account of", zh: "由於" },
+                        { en: "on average", zh: "平均而言" },
+                        { en: "on behalf of", zh: "代表" },
+                        { en: "on condition that", zh: "條件是..." },
+                        { en: "on duty", zh: "值勤" },
+                        { en: "on fire", zh: "著火" },
+                        { en: "on purpose", zh: "故意地" },
+                        { en: "on sale", zh: "特價" },
+                        { en: "on time", zh: "準時" }
+                    ] },
+                    { title: "Unit 55: Out", phrases: [
+                        { en: "out of breath", zh: "喘不過氣" },
+                        { en: "out of control", zh: "失去控制" },
+                        { en: "out of date", zh: "過時的" },
+                        { en: "out of hand", zh: "失去控制" },
+                        { en: "out of luck", zh: "運氣不好" },
+                        { en: "out of order", zh: "故障" },
+                        { en: "out of question", zh: "毫無疑問" },
+                        { en: "out of reach", zh: "拿不到" },
+                        { en: "out of sight", zh: "看不見" }
+                    ] },
+                    { title: "Unit 56: So", phrases: [
+                        { en: "so far", zh: "到目前為止" },
+                        { en: "so long as", zh: "只要" },
+                        { en: "so to speak", zh: "可以說" }
+                    ] },
+                    { title: "Unit 57: To", phrases: [
+                        { en: "to a degree", zh: "某種程度上" },
+                        { en: "to date", zh: "迄今" },
+                        { en: "to one’s advantage", zh: "對...有利" },
+                        { en: "to one’s surprise", zh: "令...驚訝的是" }
+                    ] },
+                    { title: "Unit 58: Under", phrases: [
+                        { en: "under control", zh: "在控制中" },
+                        { en: "under discussion", zh: "討論中" },
+                        { en: "under repair", zh: "維修中" },
+                        { en: "under way", zh: "進行中" }
+                    ] },
+                    { title: "Unit 59: With", phrases: [
+                        { en: "with ease", zh: "輕而易舉地" },
+                        { en: "with luck", zh: "幸運的話" },
+                        { en: "with respect to", zh: "關於" },
+                        { en: "with a view to", zh: "為了" }
+                    ] }
+                ]
+            },
+            {
+                part: "PART III：Idioms & Slang 慣用語、俚語 (Unit 60)",
+                units: [
+                    { title: "Unit 60: Idioms & Slang", phrases: [
+                        { en: "a blessing in disguise", zh: "因禍得福" },
+                        { en: "add fuel to the flames", zh: "火上加油" },
+                        { en: "all thumbs", zh: "笨手笨腳" },
+                        { en: "bear…in mind", zh: "記住" },
+                        { en: "behind the times", zh: "過時的" },
+                        { en: "bite one’s tongue", zh: "忍住不說" },
+                        { en: "blow hot and cold", zh: "搖擺不定" },
+                        { en: "break the ice", zh: "打破僵局" },
+                        { en: "burn the midnight oil", zh: "熬夜" },
+                        { en: "call it a day", zh: "收工" },
+                        { en: "come in handy", zh: "派上用場" },
+                        { en: "cry over spilled milk", zh: "覆水難收" },
+                        { en: "cut corners", zh: "偷工減料" },
+                        { en: "drop someone a hint", zh: "暗示某人" },
+                        { en: "face the music", zh: "面對現實" },
+                        { en: "feel under the weather", zh: "身體不適" },
+                        { en: "get cold feet", zh: "臨陣退縮" },
+                        { en: "get the hang of", zh: "抓到訣竅" },
+                        { en: "give someone a break", zh: "饒了某人；給個機會" },
+                        { en: "go Dutch", zh: "各付各的" },
+                        { en: "hit the books", zh: "K書" },
+                        { en: "in hot water", zh: "陷入麻煩" },
+                        { en: "keep an eye on", zh: "照看；留意" },
+                        { en: "keep one’s word", zh: "守信用" },
+                        { en: "leave no stone unturned", zh: "竭盡全力" },
+                        { en: "make ends meet", zh: "收支平衡" },
+                        { en: "out of the blue", zh: "突然" },
+                        { en: "play it by ear", zh: "見機行事" },
+                        { en: "pull someone’s leg", zh: "開玩笑" },
+                        { en: "put one’s foot down", zh: "堅持立場" },
+                        { en: "scratch the surface", zh: "觸及皮毛" },
+                        { en: "speak of the devil", zh: "說曹操，曹操到" },
+                        { en: "take … for granted", zh: "視...為理所當然" },
+                        { en: "up in the air", zh: "懸而未決" }
+                    ] }
+                ]
+            },
+            {
+                part: "PART IV：常用 UP/DOWN 片語",
+                units: [
+                    {
+                        title: "UP 連用的動詞片語",
+                        phrases: [
+                            { en: "come up", zh: "開始;發生" },
+                            { en: "give up", zh: "放棄" },
+                            { en: "go up", zh: "上升" },
+                            { en: "make up", zh: "補償;編造" },
+                            { en: "pick up", zh: "撿起" },
+                            { en: "put up", zh: "建造;搭" },
+                            { en: "set up", zh: "設立" },
+                            { en: "take up", zh: "占用" },
+                            { en: "turn up", zh: "出現" },
+                            { en: "keep up", zh: "保持" },
+                            { en: "get up", zh: "起床" },
+                            { en: "bring up", zh: "養育" },
+                            { en: "look up", zh: "查閱" },
+                            { en: "hold up", zh: "舉起" },
+                            { en: "draw up", zh: "草擬;起草" },
+                            { en: "break up", zh: "與人分手" }
+                        ]
+                    },
+                    {
+                        title: "DOWN 連用的動詞片語",
+                        phrases: [
+                            { en: "blow down", zh: "吹倒" },
+                            { en: "settle down", zh: "安頓下來" },
+                            { en: "break down", zh: "故障" },
+                            { en: "get down", zh: "拿下來" },
+                            { en: "tear down", zh: "拆除" },
+                            { en: "calm down", zh: "冷靜下來" },
+                            { en: "put down", zh: "放下" },
+                            { en: "hold down", zh: "壓制" },
+                            { en: "take down", zh: "寫下;記下" },
+                            { en: "turn down", zh: "拒絕" },
+                            { en: "bring down", zh: "使落下" },
+                            { en: "tumble down", zh: "跌倒" }
+                        ]
+                    }
+                ]
+            },
+            {
+                part: "PART V：常用 OUT/INTO 片語",
+                units: [
+                    {
+                        title: "OUT 連用的動詞片語",
+                        phrases: [
+                            { en: "make out", zh: "理解" },
+                            { en: "let out", zh: "洩露" },
+                            { en: "turn out", zh: "結果是..." },
+                            { en: "give out", zh: "分配;分發" },
+                            { en: "take out", zh: "拿出" },
+                            { en: "put out", zh: "撲滅" },
+                            { en: "go out", zh: "外出" },
+                            { en: "come out", zh: "出現" },
+                            { en: "call out", zh: "大叫" },
+                            { en: "break out", zh: "爆發" },
+                            { en: "carry out", zh: "實現" },
+                            { en: "drop out", zh: "脫離" },
+                            { en: "fall out", zh: "脫落;不和" },
+                            { en: "point out", zh: "指出" },
+                            { en: "set out", zh: "開始" },
+                            { en: "work out", zh: "解決問題" },
+                            { en: "hand out", zh: "分發" },
+                            { en: "burst out", zh: "突然(大叫/大笑)" },
+                            { en: "look out", zh: "小心" },
+                            { en: "pass out", zh: "昏倒；分發" },
+                            { en: "spread out", zh: "展開；散開" },
+                            { en: "find out", zh: "找出；發現" },
+                            { en: "stand out", zh: "突出" }
+                        ]
+                    },
+                    {
+                        title: "INTO 連用的動詞片語",
+                        phrases: [
+                            { en: "see into", zh: "調查" },
+                            { en: "look into", zh: "調查" },
+                            { en: "slip into", zh: "溜進" },
+                            { en: "bump into", zh: "偶遇" },
+                            { en: "let into", zh: "允許進入" },
+                            { en: "break into", zh: "闖入" },
+                            { en: "get into", zh: "進入;學會" },
+                            { en: "burst into", zh: "突然..." }
+                        ]
+                    }
+                ]
+            },
+            {
+                part: "PART VI：常用 IN/ON 片語",
+                units: [
+                    {
+                        title: "IN 連用的動詞片語",
+                        phrases: [
+                            { en: "fit in", zh: "適合;協調" },
+                            { en: "take in", zh: "拿進;吸收" },
+                            { en: "put in", zh: "把...放進" },
+                            { en: "get in", zh: "坐進轎車" },
+                            { en: "fill in", zh: "填寫表格" },
+                            { en: "call in", zh: "打電話" },
+                            { en: "bring in", zh: "帶來收入" },
+                            { en: "break in", zh: "適應;侵入" },
+                            { en: "stay in", zh: "在家" },
+                            { en: "hand in", zh: "繳交" },
+                            { en: "drop in", zh: "順道拜訪" },
+                            { en: "turn in", zh: "提交;歸還" },
+                            { en: "send in", zh: "交出" },
+                            { en: "pull in", zh: "火車進站" },
+                            { en: "let in", zh: "讓...進入" },
+                            { en: "give in", zh: "屈服" }
+                        ]
+                    },
+                    {
+                        title: "ON 連用的動詞片語",
+                        phrases: [
+                            { en: "catch on", zh: "受到...的歡迎" },
+                            { en: "turn on", zh: "打開開關" },
+                            { en: "take on", zh: "承擔;僱用" },
+                            { en: "put on", zh: "穿上" },
+                            { en: "keep on", zh: "繼續進行" },
+                            { en: "go on", zh: "繼續" },
+                            { en: "get on", zh: "乘坐公車、火車" },
+                            { en: "call on", zh: "拜訪" },
+                            { en: "let on", zh: "假裝;洩露" },
+                            { en: "hold on", zh: "堅持住" },
+                            { en: "drag on", zh: "時間拖得長" },
+                            { en: "count on", zh: "依靠;依賴" },
+                            { en: "carry on", zh: "繼續" },
+                            { en: "pass on", zh: "傳遞;轉讓" },
+                            { en: "look on", zh: "認為;觀望" },
+                            { en: "live on", zh: "以...維生" },
+                            { en: "try on", zh: "試穿" },
+                            { en: "switch on", zh: "開啟開關" },
+                            { en: "send on", zh: "轉送信件" },
+                            { en: "run on", zh: "繼續;喋喋不休" },
+                            { en: "leave on", zh: "開著電器" },
+                            { en: "lay on", zh: "施加...;塗(漆)" }
+                        ]
+                    }
+                ]
+            },
+            {
+                part: "PART VII：常用 OFF 片語",
+                units: [
+                    {
+                        title: "OFF 連用的動詞片語",
+                        phrases: [
+                            { en: "switch off", zh: "關掉開關" },
+                            { en: "send off", zh: "送行" },
+                            { en: "keep off", zh: "不讓...接近" },
+                            { en: "cut off", zh: "切斷" },
+                            { en: "take off", zh: "脫掉" },
+                            { en: "knock off", zh: "撞落" },
+                            { en: "go off", zh: "離去" },
+                            { en: "come off", zh: "脫落" },
+                            { en: "turn off", zh: "關掉開關" },
+                            { en: "set off", zh: "出發" },
+                            { en: "let off", zh: "施放" },
+                            { en: "get off", zh: "下車" },
+                            { en: "show off", zh: "炫耀" },
+                            { en: "put off", zh: "延期" },
+                            { en: "fall off", zh: "掉落" },
+                            { en: "break off", zh: "折斷" },
+                            { en: "call off", zh: "取消" },
+                            { en: "scrape off", zh: "刮掉" },
+                            { en: "hold off", zh: "阻止" },
+                            { en: "see off", zh: "送行" },
+                            { en: "doze off", zh: "打瞌睡" },
+                            { en: "tell off", zh: "叱責" }
+                        ]
+                    }
+                ]
+            },
+            {
+                part: "PART VIII：常用 AWAY/THROUGH/OVER/WITH 片語",
+                units: [
+                    {
+                        title: "AWAY 連用的動詞片語",
+                        phrases: [
+                            { en: "turn away", zh: "轉過去" },
+                            { en: "give away", zh: "贈送" },
+                            { en: "clear away", zh: "收拾" },
+                            { en: "pass away", zh: "去世" },
+                            { en: "die away", zh: "逐漸停息" },
+                            { en: "get away", zh: "逃脫" },
+                            { en: "scare away", zh: "嚇跑" },
+                            { en: "back away", zh: "退卻" }
+                        ]
+                    },
+                    {
+                        title: "THROUGH 連用的動詞片語",
+                        phrases: [
+                            { en: "see through", zh: "幫助...度過難關" },
+                            { en: "put through", zh: "順利完成" },
+                            { en: "go through", zh: "經歷" },
+                            { en: "break through", zh: "突破;克服" },
+                            { en: "fall through", zh: "失敗" },
+                            { en: "come through", zh: "經歷" }
+                        ]
+                    },
+                    {
+                        title: "OVER 連用的動詞片語",
+                        phrases: [
+                            { en: "blow over", zh: "消散" },
+                            { en: "get over", zh: "克服" },
+                            { en: "hand over", zh: "交出" },
+                            { en: "run over", zh: "輾過" },
+                            { en: "pull over", zh: "把車開到路邊" },
+                            { en: "heal over", zh: "痊癒" }
+                        ]
+                    },
+                    {
+                        title: "WITH 連用的動詞片語",
+                        phrases: [
+                            { en: "deal with", zh: "處理" },
+                            { en: "meet with", zh: "偶然遇到" },
+                            { en: "go with", zh: "搭配" },
+                            { en: "do with", zh: "處理" },
+                            { en: "cope with", zh: "處理" }
+                        ]
+                    }
+                ]
+            },
+            {
+                part: "PART IX：常用 TO/FOR/FROM/OF 片語",
+                units: [
+                    {
+                        title: "TO 連用的動詞片語",
+                        phrases: [
+                            { en: "get to", zh: "到達" },
+                            { en: "see to", zh: "照料" },
+                            { en: "come to", zh: "甦醒過來" },
+                            { en: "belong to", zh: "屬於" },
+                            { en: "stick to", zh: "忠於;信守" },
+                            { en: "attend to", zh: "照料" }
+                        ]
+                    },
+                    {
+                        title: "FOR 連用的動詞片語",
+                        phrases: [
+                            { en: "pay for", zh: "付款" },
+                            { en: "care for", zh: "喜歡;照顧" },
+                            { en: "look for", zh: "尋找" },
+                            { en: "account for", zh: "解釋;說明" },
+                            { en: "substitute for", zh: "取代" },
+                            { en: "stand for", zh: "代表" },
+                            { en: "call for", zh: "需要" },
+                            { en: "ask for", zh: "要求" }
+                        ]
+                    },
+                    {
+                        title: "FROM 連用的動詞片語",
+                        phrases: [
+                            { en: "resign from", zh: "辭去職務" },
+                            { en: "recover from", zh: "復原" },
+                            { en: "suffer from", zh: "受...之苦" },
+                            { en: "hear from", zh: "收到來信" },
+                            { en: "come from", zh: "來自..." }
+                        ]
+                    },
+                    {
+                        title: "OF 連用的動詞片語",
+                        phrases: [
+                            { en: "approve of", zh: "贊同" },
+                            { en: "think of", zh: "想到" },
+                            { en: "dream of", zh: "夢想" },
+                            { en: "hear of", zh: "聽說" },
+                            { en: "dispose of", zh: "處置" }
+                        ]
+                    }
+                ]
+            }
+        ]; 
+
+        // --------------------------------------------------
+        // DOM 元素
+        // --------------------------------------------------
+        const searchBar = document.getElementById('search-bar');
+        const contentArea = document.getElementById('content-area');
+        const noResultsMessage = document.getElementById('no-results');
+        const noResultsText = noResultsMessage.querySelector('span');
+
+        // 模式切換元素
+        const modeSearchBtn = document.getElementById('mode-search');
+        const modePracticeBtn = document.getElementById('mode-practice');
+        const searchContainer = document.getElementById('search-container');
+        const practiceArea = document.getElementById('practice-area');
+
+        // 遊戲元素
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const quizBoard = document.getElementById('quiz-board');
+        const quizMessage = document.getElementById('quiz-message');
+        const enPhrasesContainer = document.getElementById('en-phrases');
+        const zhOptionsPool = document.getElementById('zh-options-pool');
+
+        // 遊戲狀態
+        let allPhrases = [];
+        let correctAnswersCount = 0;
+        const QUIZ_COUNT = 5;
+
+        // --------------------------------------------------
+        // 輔助函式
+        // --------------------------------------------------
+
+        /**
+         * 將資料庫轉換為單一陣列
+         */
+        function flattenDatabase() {
+            allPhrases = [];
+            database.forEach(part => {
+                part.units.forEach(unit => {
+                    allPhrases.push(...unit.phrases);
+                });
+            });
+        }
+
+        /**
+         * Fisher-Yates 隨機排序演算法
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        /**
+         * 從陣列中隨機選取 N 個不重複的項目
+         */
+        function getRandomItems(arr, n) {
+            return shuffleArray([...arr]).slice(0, n);
+        }
+
+        // --------------------------------------------------
+        // 模式一：搜尋模式
+        // --------------------------------------------------
+        function renderSearchContent(searchTerm = '') {
+            let html = '';
+            let resultsFound = false;
+            const term = searchTerm.toLowerCase().trim();
+            const regex = term ? new RegExp(term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi') : null;
+            
+            database.forEach(part => {
+                let partHtml = '';
+                let unitCardsHtml = '';
+
+                part.units.forEach(unit => {
+                    const unitTitle = unit.title;
+                    const titleMatch = term ? unitTitle.toLowerCase().includes(term) : false;
+
+                    let matchingPhrases = [];
+                    if (term === '') {
+                        matchingPhrases = unit.phrases;
+                    } else {
+                        matchingPhrases = unit.phrases.filter(phrase => 
+                            phrase.en.toLowerCase().includes(term) || phrase.zh.toLowerCase().includes(term)
+                        );
+                    }
+
+                    if (titleMatch || matchingPhrases.length > 0) {
+                        resultsFound = true; 
+                        
+                        const phrasesToShow = (titleMatch && matchingPhrases.length === 0 && term !== '') 
+                                              ? unit.phrases 
+                                              : matchingPhrases;
+
+                        const phrasesHtml = phrasesToShow.map(phrase => {
+                            const highlightedEn = regex 
+                                ? phrase.en.replace(regex, '<mark class="highlight">$&</mark>')
+                                : phrase.en;
+                            const highlightedZh = regex
+                                ? phrase.zh.replace(regex, '<mark class="highlight-zh">$&</mark>')
+                                : phrase.zh;
+                                
+                            return `<li class="py-1 px-2 -mx-2 rounded hover:bg-slate-700/50 transition-colors duration-150">
+                                        <span>${highlightedEn}</span>
+                                        <span class="phrase-zh">${highlightedZh}</span>
+                                    </li>`;
+                        }).join('');
+
+                        const highlightedTitle = regex
+                            ? unitTitle.replace(regex, '<mark class="highlight">$&</mark>')
+                            : unitTitle;
+                            
+                        unitCardsHtml += `
+                            <div class="bg-slate-800 rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 hover:shadow-cyan-500/10 hover:scale-[1.01]">
+                                <div class="p-5">
+                                    <h3 class="text-2xl font-semibold text-cyan-400 mb-3">${highlightedTitle}</h3>
+                                    <ul class="space-y-1 text-slate-300 text-lg">
+                                        ${phrasesHtml}
+                                    </ul>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+
+                if (unitCardsHtml) {
+                    partHtml += `
+                        <section>
+                            <h2 class="text-3xl font-bold text-slate-300 mb-6 pb-2 border-b-2 border-slate-700">${part.part}</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                ${unitCardsHtml}
+                            </div>
+                        </section>
+                    `;
+                }
+                html += partHtml;
+            });
+
+            contentArea.innerHTML = html;
+
+            if (!resultsFound && term !== '') {
+                noResultsText.textContent = term;
+                noResultsMessage.classList.remove('hidden');
+            } else {
+                noResultsMessage.classList.add('hidden');
+            }
+        }
+
+        // --------------------------------------------------
+        // 模式二：練習模式 (拖拉遊戲)
+        // --------------------------------------------------
+
+        function startGame() {
+            // 1. 重置遊戲
+            correctAnswersCount = 0;
+            quizBoard.classList.remove('hidden');
+            quizMessage.classList.add('hidden');
+            enPhrasesContainer.innerHTML = '';
+            zhOptionsPool.innerHTML = '';
+
+            // 2. 準備題目
+            // 取得 5 題隨機題目
+            const quizItems = getRandomItems(allPhrases, QUIZ_COUNT);
+            
+            // 取得 5 個正確答案
+            const correctOptions = quizItems.map(item => item.zh);
+
+            // 取得 5 個干擾選項 (從所有片語中排除正確答案，再隨機抽 5 個)
+            const distractors = getRandomItems(
+                allPhrases.filter(item => !correctOptions.includes(item.zh)), 
+                QUIZ_COUNT
+            ).map(item => item.zh);
+
+            // 3. 混合並渲染中文選項
+            const allOptions = shuffleArray([...correctOptions, ...distractors]);
+            
+            allOptions.forEach((zhText, index) => {
+                const optionEl = document.createElement('div');
+                optionEl.classList.add('draggable', 'p-3', 'bg-slate-600', 'rounded-lg', 'text-center', 'text-slate-200');
+                optionEl.setAttribute('draggable', 'true');
+                optionEl.dataset.text = zhText; // 儲存答案
+                optionEl.id = `drag-${index}`;
+                optionEl.textContent = zhText;
+                zhOptionsPool.appendChild(optionEl);
+            });
+
+            // 4. 渲染英文題目 (放置區)
+            quizItems.forEach((item, index) => {
+                const enEl = document.createElement('div');
+                enEl.classList.add('bg-slate-700', 'p-4', 'rounded-lg');
+                enEl.innerHTML = `
+                    <span class="text-lg font-semibold text-slate-100">${item.en}</span>
+                    <div class="drop-target mt-2 h-14 bg-slate-900/50 rounded-lg border-2 border-dashed border-slate-600 flex justify-center items-center text-slate-500" data-answer="${item.zh}">
+                        拖曳中文答案到這裡
+                    </div>
+                `;
+                enPhrasesContainer.appendChild(enEl);
+            });
+        }
+
+        // --------------------------------------------------
+        // Drag-and-Drop 事件處理
+        // --------------------------------------------------
+
+        let draggedItem = null;
+
+        // 監聽拖曳開始 (在選項池)
+        zhOptionsPool.addEventListener('dragstart', e => {
+            if (e.target.classList.contains('draggable')) {
+                draggedItem = e.target;
+                e.target.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', e.target.dataset.text);
+                e.dataTransfer.effectAllowed = 'move';
+            }
+        });
+
+        // 監聽拖曳結束 (在選項池)
+        zhOptionsPool.addEventListener('dragend', e => {
+            if (draggedItem) {
+                draggedItem.classList.remove('dragging');
+                draggedItem = null;
+            }
+        });
+
+        // 監聽拖曳進入 (在英文題目區)
+        enPhrasesContainer.addEventListener('dragover', e => {
+            e.preventDefault(); // 必須
+            const dropTarget = e.target.closest('.drop-target');
+            if (dropTarget && !dropTarget.classList.contains('correct')) {
+                dropTarget.classList.add('drag-over');
+                e.dataTransfer.dropEffect = 'move';
+            }
+        });
+
+        // 監聽拖曳離開 (在英文題目區)
+        enPhrasesContainer.addEventListener('dragleave', e => {
+            const dropTarget = e.target.closest('.drop-target');
+            if (dropTarget) {
+                dropTarget.classList.remove('drag-over');
+            }
+        });
+
+        // 監聽放下 (在英文題目區)
+        enPhrasesContainer.addEventListener('drop', e => {
+            e.preventDefault();
+            const dropTarget = e.target.closest('.drop-target');
+            
+            if (dropTarget && !dropTarget.classList.contains('correct') && draggedItem) {
+                dropTarget.classList.remove('drag-over');
+                const droppedAnswer = e.dataTransfer.getData('text/plain');
+                const correctAnswer = dropTarget.dataset.answer;
+
+                if (droppedAnswer === correctAnswer) {
+                    // 答對
+                    dropTarget.textContent = droppedAnswer;
+                    dropTarget.classList.add('correct');
+                    draggedItem.classList.add('used'); // 標記已使用的選項
+                    
+                    correctAnswersCount++;
+                    if (correctAnswersCount === QUIZ_COUNT) {
+                        // 全部答對
+                        quizMessage.classList.remove('hidden');
+                    }
+                } else {
+                    // 答錯
+                    dropTarget.classList.add('incorrect');
+                    // 移除答錯動畫
+                    setTimeout(() => {
+                        dropTarget.classList.remove('incorrect');
+                    }, 500);
+                }
+            }
+        });
+
+        // --------------------------------------------------
+        // 模式切換
+        // --------------------------------------------------
+        function setupModeToggles() {
+            modeSearchBtn.addEventListener('click', () => {
+                modeSearchBtn.classList.add('active');
+                modePracticeBtn.classList.remove('active');
+                
+                searchContainer.classList.remove('hidden');
+                contentArea.classList.remove('hidden');
+                practiceArea.classList.add('hidden');
+                
+                if (searchBar.value.trim() !== '') {
+                    noResultsMessage.classList.toggle(!contentArea.hasChildNodes());
+                }
+            });
+
+            modePracticeBtn.addEventListener('click', () => {
+                modeSearchBtn.classList.remove('active');
+                modePracticeBtn.classList.add('active');
+                
+                searchContainer.classList.add('hidden');
+                contentArea.classList.add('hidden');
+                practiceArea.classList.remove('hidden');
+                noResultsMessage.classList.add('hidden');
+            });
+        }
+
+        // --------------------------------------------------
+        // 頁面初始化
+        // --------------------------------------------------
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. 展平資料庫
+            flattenDatabase();
+            
+            // 2. 初始渲染搜尋模式
+            renderSearchContent();
+            
+            // 3. 設定模式切換
+            setupModeToggles();
+
+            // 4. 監聽搜尋欄
+            searchBar.addEventListener('input', (e) => {
+                renderSearchContent(e.target.value);
+            });
+
+            // 5. 監聽遊戲開始按鈕
+            startQuizBtn.addEventListener('click', startGame);
+        });
+
+    </script>
+</body>
+</html>
