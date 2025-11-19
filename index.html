@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -15,7 +14,7 @@
         /* 使用 Noto Sans TC 作為中文字體，Inter 作為英文字體 */
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
-            /* Scrollbar styling */
+            scroll-behavior: smooth; /* 平滑滾動 */
         }
         ::-webkit-scrollbar {
             width: 8px;
@@ -46,7 +45,6 @@
             margin-left: 0.5rem;
         }
         .phrase-zh:empty {
-            /* 如果中文內容為空，則不顯示 */
             display: none;
         }
         .highlight-zh {
@@ -122,11 +120,61 @@
             cursor: not-allowed;
             pointer-events: none;
         }
+
+        /* 折疊選單樣式 */
+        .accordion-content {
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .accordion-content.open {
+            max-height: 2000px; /* 足夠大的高度 */
+            opacity: 1;
+        }
+        .accordion-header {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        /* 摺疊時的箭頭旋轉 */
+        .accordion-icon {
+            transition: transform 0.3s;
+        }
+        .accordion-header.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        /* A-Z 索引導覽樣式 */
+        .az-nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #94a3b8;
+            border-radius: 50%;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .az-nav-item:hover, .az-nav-item.active {
+            background-color: #0e7490;
+            color: white;
+        }
+        /* 手機版橫向捲軸隱藏捲軸但保留功能 */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none; 
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none; 
+            scrollbar-width: none;  
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen antialiased">
 
-    <div class="container mx-auto max-w-6xl p-4 md:p-8">
+    <div class="container mx-auto max-w-7xl p-4 md:p-8">
         
         <!-- 1. 標題 -->
         <header class="text-center mb-6">
@@ -134,7 +182,7 @@
                 英文片語互動學習庫
             </h1>
             <p class="text-lg md:text-xl text-slate-400">
-                即時搜尋、高效學習。告別死背，讓學習動起來！
+                點擊標題展開學習，或使用右側 A-Z 快速跳轉。
             </p>
         </header>
 
@@ -154,59 +202,79 @@
             </button>
         </div>
 
-        <!-- 3. 搜尋欄 (僅搜尋模式顯示) -->
-        <div id="search-container" class="sticky top-4 z-10 mb-8">
-            <input type="text" id="search-bar"
-                   placeholder="搜尋英文片語或中文意思... (例如: blow up, by chance, ...)"
-                   class="w-full p-4 text-lg bg-slate-800 text-white border-2 border-slate-700 rounded-xl shadow-lg
-                          focus:outline-none focus:ring-4 focus:ring-cyan-500/50 focus:border-cyan-500 transition duration-300">
-        </div>
-
-        <!-- 4. Content Area (搜尋模式) -->
-        <div id="content-area" class="space-y-10">
-            <!-- 搜尋內容將由 JavaScript 動態生成 -->
-        </div>
-
-        <!-- 5. Content Area (練習模式) -->
-        <div id="practice-area" class="space-y-8 hidden">
-            <!-- 1. Control Button -->
-            <div class="text-center">
-                <button id="start-quiz-btn" class="px-6 py-3 bg-cyan-600 text-white font-bold rounded-lg shadow-lg hover:bg-cyan-700 transition-transform transform hover:scale-105">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-5 h-5 mr-2 -mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m-15.357-2a8.001 8.001 0 0015.357 2m0 0H15" />
-                    </svg>
-                    開始新遊戲 (5題)
-                </button>
-            </div>
-        
-            <!-- 2. Game Board -->
-            <div id="quiz-board" class="mt-8 p-4 md:p-6 bg-slate-800 rounded-xl shadow-inner hidden">
-                <div id="quiz-message" class="text-center text-2xl font-bold text-green-400 mb-6 hidden">
-                    🎉 恭喜！全部答對了！ 🎉
-                </div>
+        <!-- 主要佈局容器：左側內容 + 右側導覽 -->
+        <div class="flex flex-col lg:flex-row gap-6 relative items-start">
+            
+            <!-- 左側主要內容區塊 -->
+            <div class="flex-1 min-w-0 w-full">
                 
-                <div class="flex flex-col md:flex-row gap-6 md:gap-8">
-                    <!-- Column 1: English Phrases (Drop Targets) -->
-                    <div id="en-phrases" class="flex-1 space-y-4 md:w-1/2">
-                        <!-- 英文題目會動態生成於此 -->
+                <!-- 3. 搜尋欄 (僅搜尋模式顯示) -->
+                <div id="search-container" class="sticky top-2 z-20 mb-4 bg-slate-900/95 backdrop-blur py-2">
+                    <input type="text" id="search-bar"
+                           placeholder="搜尋英文片語或中文意思... (例如: blow up, by chance)"
+                           class="w-full p-4 text-lg bg-slate-800 text-white border-2 border-slate-700 rounded-xl shadow-lg
+                                  focus:outline-none focus:ring-4 focus:ring-cyan-500/50 focus:border-cyan-500 transition duration-300">
+                    
+                    <!-- 手機版 A-Z 導覽列 (顯示在搜尋欄下方) -->
+                    <div id="mobile-az-nav" class="lg:hidden mt-3 flex overflow-x-auto hide-scrollbar gap-2 py-1 border-b border-slate-700/50">
+                        <!-- JavaScript 動態生成字母 -->
                     </div>
-        
-                    <!-- Column 2: Chinese Options (Draggables) -->
-                    <div class="flex-1 md:w-1/2 p-4 bg-slate-800 border border-slate-700 rounded-lg">
-                        <h3 class="text-xl font-semibold text-cyan-400 mb-4 text-center">中文選項 (拖曳到左側)</h3>
-                        <div id="zh-options-pool" class="grid grid-cols-2 gap-3">
-                            <!-- 中文選項會動態生成於此 -->
+                </div>
+
+                <!-- 4. Content Area (搜尋模式) -->
+                <div id="content-area" class="space-y-6">
+                    <!-- 搜尋內容將由 JavaScript 動態生成 -->
+                </div>
+
+                <!-- 5. Content Area (練習模式) -->
+                <div id="practice-area" class="space-y-8 hidden">
+                    <!-- 1. Control Button -->
+                    <div class="text-center">
+                        <button id="start-quiz-btn" class="px-6 py-3 bg-cyan-600 text-white font-bold rounded-lg shadow-lg hover:bg-cyan-700 transition-transform transform hover:scale-105">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-5 h-5 mr-2 -mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m-15.357-2a8.001 8.001 0 0015.357 2m0 0H15" />
+                            </svg>
+                            開始新遊戲 (5題)
+                        </button>
+                    </div>
+                
+                    <!-- 2. Game Board -->
+                    <div id="quiz-board" class="mt-8 p-4 md:p-6 bg-slate-800 rounded-xl shadow-inner hidden">
+                        <div id="quiz-message" class="text-center text-2xl font-bold text-green-400 mb-6 hidden">
+                            🎉 恭喜！全部答對了！ 🎉
+                        </div>
+                        
+                        <div class="flex flex-col md:flex-row gap-6 md:gap-8">
+                            <!-- Column 1: English Phrases (Drop Targets) -->
+                            <div id="en-phrases" class="flex-1 space-y-4 md:w-1/2">
+                                <!-- 英文題目會動態生成於此 -->
+                            </div>
+                
+                            <!-- Column 2: Chinese Options (Draggables) -->
+                            <div class="flex-1 md:w-1/2 p-4 bg-slate-800 border border-slate-700 rounded-lg">
+                                <h3 class="text-xl font-semibold text-cyan-400 mb-4 text-center">中文選項 (拖曳到左側)</h3>
+                                <div id="zh-options-pool" class="grid grid-cols-2 gap-3">
+                                    <!-- 中文選項會動態生成於此 -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- 6. 找不到結果的提示 (僅搜尋模式顯示) -->
-        <div id="no-results" class="text-center text-slate-500 text-xl py-20 hidden">
-            <p>Oops! 找不到符合 "<span></span>" 的片語。</p>
-            <p class="text-base mt-2">試試看別的關鍵字？</p>
-        </div>
+                <!-- 6. 找不到結果的提示 (僅搜尋模式顯示) -->
+                <div id="no-results" class="text-center text-slate-500 text-xl py-20 hidden">
+                    <p>Oops! 找不到符合 "<span></span>" 的片語。</p>
+                    <p class="text-base mt-2">試試看別的關鍵字？</p>
+                </div>
+            </div>
+
+            <!-- 電腦版 A-Z 側邊懸浮導覽 -->
+            <div id="desktop-az-nav" class="hidden lg:flex flex-col gap-1 sticky top-4 bg-slate-800 p-2 rounded-xl shadow-lg max-h-[90vh] overflow-y-auto w-16 items-center shrink-0">
+                <div class="text-xs font-bold text-cyan-500 mb-2">索引</div>
+                <!-- JavaScript 動態生成字母 -->
+            </div>
+
+        </div> <!-- End Flex Container -->
 
     </div>
 
@@ -1292,6 +1360,8 @@
         const contentArea = document.getElementById('content-area');
         const noResultsMessage = document.getElementById('no-results');
         const noResultsText = noResultsMessage.querySelector('span');
+        const desktopAzNav = document.getElementById('desktop-az-nav');
+        const mobileAzNav = document.getElementById('mobile-az-nav');
 
         // 模式切換元素
         const modeSearchBtn = document.getElementById('mode-search');
@@ -1346,7 +1416,7 @@
         }
 
         // --------------------------------------------------
-        // 模式一：搜尋模式
+        // 模式一：搜尋模式 (包含摺疊邏輯)
         // --------------------------------------------------
         function renderSearchContent(searchTerm = '') {
             let html = '';
@@ -1354,11 +1424,17 @@
             const term = searchTerm.toLowerCase().trim();
             const regex = term ? new RegExp(term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi') : null;
             
-            database.forEach(part => {
-                let partHtml = '';
-                let unitCardsHtml = '';
+            // 收集每個字母的第一個單元 ID，用於建立索引
+            const letterIndexMap = {}; 
 
-                part.units.forEach(unit => {
+            // 整個內容的容器
+            const sectionsHtml = [];
+
+            database.forEach((part, partIndex) => {
+                let unitCardsHtml = '';
+                let hasMatchingUnitsInPart = false;
+
+                part.units.forEach((unit, unitIndex) => {
                     const unitTitle = unit.title;
                     const titleMatch = term ? unitTitle.toLowerCase().includes(term) : false;
 
@@ -1371,12 +1447,25 @@
                         );
                     }
 
+                    // 判斷是否顯示此單元 (搜尋模式下)
                     if (titleMatch || matchingPhrases.length > 0) {
                         resultsFound = true; 
+                        hasMatchingUnitsInPart = true;
                         
                         const phrasesToShow = (titleMatch && matchingPhrases.length === 0 && term !== '') 
                                               ? unit.phrases 
                                               : matchingPhrases;
+
+                        // 記錄 A-Z 索引 (取標題中 "Unit X: Word" 的 Word 首字母)
+                        // 通常格式是 "Unit X: Word"，我們取冒號後的字
+                        const titleParts = unitTitle.split(':');
+                        if (titleParts.length > 1) {
+                            const mainWord = titleParts[1].trim();
+                            const firstLetter = mainWord.charAt(0).toUpperCase();
+                            if (/[A-Z]/.test(firstLetter) && !letterIndexMap[firstLetter]) {
+                                letterIndexMap[firstLetter] = `unit-${partIndex}-${unitIndex}`;
+                            }
+                        }
 
                         const phrasesHtml = phrasesToShow.map(phrase => {
                             const highlightedEn = regex 
@@ -1386,23 +1475,38 @@
                                 ? phrase.zh.replace(regex, '<mark class="highlight-zh">$&</mark>')
                                 : phrase.zh;
                                 
-                            return `<li class="py-1 px-2 -mx-2 rounded hover:bg-slate-700/50 transition-colors duration-150">
-                                        <span>${highlightedEn}</span>
-                                        <span class="phrase-zh">${highlightedZh}</span>
+                            return `<li class="py-2 px-3 rounded hover:bg-slate-700/50 transition-colors duration-150 border-b border-slate-700/30 last:border-0">
+                                        <div class="font-medium text-slate-200">${highlightedEn}</div>
+                                        <div class="phrase-zh mt-1">${highlightedZh}</div>
                                     </li>`;
                         }).join('');
 
                         const highlightedTitle = regex
                             ? unitTitle.replace(regex, '<mark class="highlight">$&</mark>')
                             : unitTitle;
-                            
+
+                        // 決定是否展開：搜尋時如果有結果，預設展開；沒有搜尋時，預設摺疊
+                        const isOpen = term !== '';
+                        const contentClass = isOpen ? 'accordion-content open' : 'accordion-content';
+                        const headerClass = isOpen ? 'accordion-header active bg-slate-800' : 'accordion-header bg-emerald-800/80 hover:bg-emerald-700/80';
+                        const headerTextClass = isOpen ? 'text-cyan-400' : 'text-white';
+
                         unitCardsHtml += `
-                            <div class="bg-slate-800 rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 hover:shadow-cyan-500/10 hover:scale-[1.01]">
-                                <div class="p-5">
-                                    <h3 class="text-2xl font-semibold text-cyan-400 mb-3">${highlightedTitle}</h3>
-                                    <ul class="space-y-1 text-slate-300 text-lg">
-                                        ${phrasesHtml}
-                                    </ul>
+                            <div class="bg-slate-800 rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 border border-slate-700/50" id="unit-${partIndex}-${unitIndex}">
+                                <!-- Header (Click to Toggle) -->
+                                <div class="${headerClass} p-4 flex justify-between items-center select-none" onclick="toggleAccordion(this)">
+                                    <h3 class="text-xl font-semibold ${headerTextClass}">${highlightedTitle}</h3>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="accordion-icon h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                                <!-- Content (Collapsible) -->
+                                <div class="${contentClass}">
+                                    <div class="p-5 bg-slate-800/50 border-t border-slate-700">
+                                        <ul class="space-y-1 text-slate-300 text-lg">
+                                            ${phrasesHtml}
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -1410,19 +1514,21 @@
                 });
 
                 if (unitCardsHtml) {
-                    partHtml += `
-                        <section>
-                            <h2 class="text-3xl font-bold text-slate-300 mb-6 pb-2 border-b-2 border-slate-700">${part.part}</h2>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    sectionsHtml.push(`
+                        <section class="mb-10">
+                            <h2 class="text-2xl md:text-3xl font-bold text-slate-300 mb-6 pb-2 border-b-2 border-slate-700 flex items-center">
+                                <span class="bg-cyan-600 w-2 h-8 mr-3 rounded"></span>
+                                ${part.part}
+                            </h2>
+                            <div class="grid grid-cols-1 gap-4">
                                 ${unitCardsHtml}
                             </div>
                         </section>
-                    `;
+                    `);
                 }
-                html += partHtml;
             });
 
-            contentArea.innerHTML = html;
+            contentArea.innerHTML = sectionsHtml.join('');
 
             if (!resultsFound && term !== '') {
                 noResultsText.textContent = term;
@@ -1430,7 +1536,89 @@
             } else {
                 noResultsMessage.classList.add('hidden');
             }
+
+            // 更新 A-Z 導覽列
+            renderAzNav(letterIndexMap);
         }
+
+        // 摺疊切換功能
+        window.toggleAccordion = function(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.accordion-icon');
+            const title = header.querySelector('h3');
+
+            if (content.classList.contains('open')) {
+                // Close
+                content.classList.remove('open');
+                header.classList.remove('active', 'bg-slate-800');
+                header.classList.add('bg-emerald-800/80', 'hover:bg-emerald-700/80');
+                title.classList.remove('text-cyan-400');
+                title.classList.add('text-white');
+            } else {
+                // Open
+                content.classList.add('open');
+                header.classList.add('active', 'bg-slate-800');
+                header.classList.remove('bg-emerald-800/80', 'hover:bg-emerald-700/80');
+                title.classList.add('text-cyan-400');
+                title.classList.remove('text-white');
+            }
+        };
+
+        // 渲染 A-Z 導覽
+        function renderAzNav(map) {
+            const letters = Object.keys(map).sort();
+            
+            // Desktop HTML
+            let desktopHtml = '';
+            // Mobile HTML
+            let mobileHtml = '';
+
+            letters.forEach(letter => {
+                const targetId = map[letter];
+                
+                // Desktop Item
+                desktopHtml += `<div class="az-nav-item" onclick="scrollToUnit('${targetId}')">${letter}</div>`;
+                
+                // Mobile Item
+                mobileHtml += `<div class="az-nav-item bg-slate-800 border border-slate-600 shrink-0 w-10 h-10" onclick="scrollToUnit('${targetId}')">${letter}</div>`;
+            });
+
+            // 如果沒有索引 (例如搜尋結果很少)，顯示提示或隱藏
+            if (letters.length === 0) {
+                desktopAzNav.classList.add('hidden');
+                mobileAzNav.parentElement.classList.add('hidden'); // 隱藏整個導覽列容器
+            } else {
+                desktopAzNav.innerHTML = '<div class="text-xs font-bold text-cyan-500 mb-2">索引</div>' + desktopHtml;
+                desktopAzNav.classList.remove('hidden');
+                desktopAzNav.classList.add('lg:flex');
+                
+                mobileAzNav.innerHTML = mobileHtml;
+                mobileAzNav.parentElement.classList.remove('hidden');
+            }
+        }
+
+        window.scrollToUnit = function(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                // 偏移量，因為有 sticky header
+                const headerOffset = 180; 
+                const elementPosition = element.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: "smooth"
+                });
+
+                // 高亮一下目標單元
+                element.classList.add('ring-2', 'ring-cyan-400');
+                setTimeout(() => {
+                    element.classList.remove('ring-2', 'ring-cyan-400');
+                }, 1500);
+                
+                // 已移除自動打開折疊的邏輯
+            }
+        };
 
         // --------------------------------------------------
         // 模式二：練習模式 (拖拉遊戲)
@@ -1568,6 +1756,8 @@
                 
                 searchContainer.classList.remove('hidden');
                 contentArea.classList.remove('hidden');
+                desktopAzNav.classList.remove('hidden'); // Show nav
+                desktopAzNav.classList.add('lg:flex');
                 practiceArea.classList.add('hidden');
                 
                 if (searchBar.value.trim() !== '') {
@@ -1581,6 +1771,8 @@
                 
                 searchContainer.classList.add('hidden');
                 contentArea.classList.add('hidden');
+                desktopAzNav.classList.add('hidden'); // Hide nav
+                desktopAzNav.classList.remove('lg:flex');
                 practiceArea.classList.remove('hidden');
                 noResultsMessage.classList.add('hidden');
             });
